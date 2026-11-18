@@ -1,0 +1,34 @@
+<idea-plugin require-restart="true">
+  <id>local.brainrot</id>
+  <name>Brainrot</name>
+  <description><![CDATA[
+Bongo cat in the corner, a rainbow cat that runs with your typing speed, an idle bouncer, a boom on save,
+short-video feeds in tool windows with autoscroll and ad-host blocking, and Comic Mono as the editor font.
+  ]]></description>
+  <vendor>local</vendor>
+
+  <depends>com.intellij.modules.platform</depends>
+  <depends>com.bryantjames.ridiculouscoding</depends>
+  <depends>some.awesome</depends>
+
+  <applicationListeners>
+    <listener class="brainrot.NyanPin" topic="com.intellij.ide.AppLifecycleListener"/>
+    <listener class="brainrot.ActionHook" topic="com.intellij.openapi.actionSystem.ex.AnActionListener"/>
+    <listener class="brainrot.FontEnforcer" topic="com.intellij.ide.AppLifecycleListener"/>
+    <listener class="brainrot.FontEnforcer" topic="com.intellij.openapi.editor.colors.EditorColorsListener"/>
+  </applicationListeners>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <typedHandler implementation="brainrot.TypingHook"/>
+    <notificationGroup id="Brainrot" displayType="BALLOON"/>
+    <toolWindow id="YouTube Shorts" factoryClass="brainrot.FeedToolWindowFactory" anchor="right"/>
+    <toolWindow id="TikTok" factoryClass="brainrot.FeedToolWindowFactory" anchor="right"/>
+    <toolWindow id="Instagram Reels" factoryClass="brainrot.FeedToolWindowFactory" anchor="right"/>
+  </extensions>
+
+  <actions>
+    <action id="brainrot.Toggle" class="brainrot.ToggleBrainrot" text="Brainrot Mode">
+      <add-to-group group-id="ToolsMenu" anchor="last"/>
+    </action>
+  </actions>
+</idea-plugin>

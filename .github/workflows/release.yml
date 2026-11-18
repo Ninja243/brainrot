@@ -1,0 +1,56 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+    paths-ignore: ['**.md']
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-java@d1374f8ac74474200d16ef8ecee22c7ae7a51880 # v6.3.0
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
+
+      - name: Next version
+        id: version
+        run: |
+          last=$(git describe --tags --abbrev=0 --match 'v*' 2>/dev/null || true)
+          if [ -n "$last" ]; then range="$last..HEAD"; base="${last#v}"; else range=HEAD; base=0.1.1; fi
+          log=$(git log --format='%s%n%b' "$range")
+          IFS=. read -r major minor patch <<< "$base"
+          if grep -qE '^[a-z]+(\(.+\))?!:|BREAKING CHANGE' <<< "$log"; then
+            major=$((major + 1)); minor=0; patch=0
+          elif grep -qE '^feat(\(.+\))?:' <<< "$log"; then
+            minor=$((minor + 1)); patch=0
+          else
+            patch=$((patch + 1))
+          fi
+          echo "version=$major.$minor.$patch" >> "$GITHUB_OUTPUT"
+
+      - name: Build
+        run: ./gradlew test buildPlugin -PpluginVersion=${{ steps.version.outputs.version }}
+
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          gh release create "v$VERSION" \
+            "build/distributions/brainrot-$VERSION.zip" \
+            --target "$GITHUB_SHA" --generate-notes
